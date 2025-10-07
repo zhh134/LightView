@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ex:WindowEx
+    x:Class="LightView.Windows.CrashPadWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:LightView.Windows"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ex="using:WinUIEx"
+    mc:Ignorable="d"
+    Title="错误报告">
+
+    <ex:WindowEx.SystemBackdrop>
+        <MicaBackdrop />
+    </ex:WindowEx.SystemBackdrop>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="72" />
+        </Grid.RowDefinitions>
+        <TextBlock Margin="40, 36" Style="{ThemeResource TitleTextBlockStyle}" FontWeight="SemiBold">啊哦，出错了 :-(</TextBlock>
+        <Grid Grid.Row="1" Margin="0,16">
+            <TextBox HorizontalAlignment="Stretch" 
+                     VerticalAlignment="Stretch" 
+                     IsReadOnly="True"
+                     Margin="36,0" 
+                     Text="{x:Bind _crashInfo, Mode=OneWay}"/>
+        </Grid>
+        <Border Grid.Row="2" 
+                Background="{ThemeResource SystemControlBackgroundChromeBlackLowBrush}"
+                BorderThickness="1,0,0,0" 
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+
+            <Grid ColumnSpacing="8" 
+                  Margin="16" 
+                  VerticalAlignment="Stretch"
+                  HorizontalAlignment="Right">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="CloseButton" VerticalAlignment="Stretch">关闭</Button>
+                <Button x:Name="CopyButton" Grid.Column="1" VerticalAlignment="Stretch" Style="{ThemeResource AccentButtonStyle}">复制错误信息</Button> 
+            </Grid>
+        </Border>
+    </Grid>
+</ex:WindowEx>
