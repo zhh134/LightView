@@ -68,8 +68,16 @@ namespace LightView
                     // Safely handle file activation: check for nulls and use pattern matching
                     if (activateArgs != null && activateArgs.Kind == ExtendedActivationKind.File && activateArgs.Data is FileActivatedEventArgs fileArgs && fileArgs.Files != null && fileArgs.Files.Count > 0)
                     {
-                        var list = fileArgs.Files.ToList();
-                        rootFrame.Navigate(typeof(Pages.ImageViewerPage), list);
+                        try
+                        {
+                            var list = fileArgs.Files.ToList();
+                            rootFrame.Navigate(typeof(Pages.ImageViewerPage), list);
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Error navigating to ImageViewerPage: {ex.Message}");
+                            throw;
+                        }
                     }
                     else
                     {
@@ -82,6 +90,7 @@ namespace LightView
             catch (Exception ex)
             {
                 // Prevent app crash during activation; show crash info window and try to recover
+                System.Diagnostics.Debug.WriteLine($"Unhandled exception during activation: {ex.Message}");
                 try
                 {
                     var window = new CrashPadWindow();

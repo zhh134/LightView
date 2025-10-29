@@ -8,6 +8,9 @@ using LightView.Models;
 using LightView.ViewModels;
 using LightView.Windows;
 using Windows.ApplicationModel.DataTransfer;
+using System.Threading.Tasks;
+using System;
+using AsyncAwaitBestPractices;
 
 
 namespace LightView.Pages
@@ -30,19 +33,32 @@ namespace LightView.Pages
             base.OnNavigatedTo(e);
 
             ViewModel.RegisterForPrinting();
-            
-            if (e.Parameter is List<IStorageItem> storageItems)
+
+            try
             {
-                storageItems.Select(t => t.MapToImageModel()).ToList()
-                    .ForEach(t => ViewModel.Images.Add(t));
-                ViewModel.CurrentImage = ViewModel.Images.FirstOrDefault() ?? new ImageModel();
+                if (e.Parameter is List<IStorageItem> storageItems)
+                {
+                    storageItems.Select(t => t.MapToImageModel()).ToList()
+                        .ForEach(t => ViewModel.Images.Add(t));
+                    ViewModel.CurrentImage = ViewModel.Images.FirstOrDefault() ?? new ImageModel();
+
+                    if (ViewModel.CurrentImage != null)
+                    {
+                        ViewModel.LoadImagesFromFolderAsync(ViewModel.CurrentImage.PathOringinalString).SafeFireAndForget();
+                    }
+                }
+                else if (e.Parameter is string path)
+                {
+                    ViewModel.OpenImage(path);
+                }
+                else
+                {
+                    MainWindow.Current.RootFrame.Navigate(typeof(WelcomePage));
+                }
             }
-            else if (e.Parameter is string path)
+            catch (Exception ex)
             {
-                ViewModel.CurrentImage = ImageModel.CreateFromPath(path) ?? new ImageModel();
-            }
-            else
-            {
+                System.Diagnostics.Debug.WriteLine($"Error during navigation to ImageViewerPage: {ex.Message}");
                 MainWindow.Current.RootFrame.Navigate(typeof(WelcomePage));
             }
         }
@@ -63,5 +79,11 @@ namespace LightView.Pages
             MainWindow.Current.ShowSettings();
         }
 
+       
+        private void ItemsView_ItemInvoked(ItemsView sender, ItemsViewItemInvokedEventArgs args)
+        {
+            var img = args.InvokedItem as ImageModel;
+            ViewModel.OpenImage(img?.PathOringinalString);
+        }
     }
 }

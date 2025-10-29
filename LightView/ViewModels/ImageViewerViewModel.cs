@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using AsyncAwaitBestPractices;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LightView.Models;
 using LightView.Utils;
@@ -10,6 +11,9 @@ using Microsoft.UI.Xaml.Printing;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Graphics.Printing;
@@ -27,12 +31,19 @@ namespace LightView.ViewModels
         [ObservableProperty] private PrintDocument _printDocument;
         [ObservableProperty] private IPrintDocumentSource _printDocumentSource;
         [ObservableProperty] private string _displayInfo;
+        [ObservableProperty] private ObservableCollection<ImageModel> _folderImages = new ObservableCollection<ImageModel>();
 
         private readonly DataTransferManager dataTransferManager
             = MainWindow.Current.GetForWindow();
         private readonly PrintManager printManager
             = MainWindow.Current.GetPrintManagerForWindow();
         private List<UIElement> printPreviewPages = new List<UIElement>();
+
+        public ImageViewerViewModel()
+        {
+            Images = new ObservableCollection<ImageModel>();
+            FolderImages = new ObservableCollection<ImageModel>();
+        }
 
         partial void OnCurrentImageChanged(ImageModel value)
         {
@@ -215,6 +226,50 @@ namespace LightView.ViewModels
                 }
             }
 
+        }
+
+        public async Task LoadImagesFromFolderAsync(string imagePath)
+        {
+            try
+            {
+                var folderPath = Path.GetDirectoryName(imagePath);
+                if (folderPath == null) return;
+
+                var files = Directory.EnumerateFiles(folderPath)
+                    .Where(file => IsImageFile(Path.GetExtension(file)))
+                    .ToList();
+
+                Debug.WriteLine($"Loading {files.Count} images from folder: {folderPath}");
+
+                FolderImages.Clear();
+                foreach (var file in files)
+                {
+                    Debug.WriteLine($"Adding image: {file}");
+                    FolderImages.Add(ImageModel.CreateFromPath(file));
+                }
+
+                Debug.WriteLine($"FolderImages now contains {FolderImages.Count} items.");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading images: {ex.Message}");
+            }
+        }
+
+        public void OpenImage(string path)
+        {
+            CurrentImage = ImageModel.CreateFromPath(path) ?? new ImageModel();
+
+            if (CurrentImage != null)
+            {
+                LoadImagesFromFolderAsync(CurrentImage.PathOringinalString).SafeFireAndForget();
+            }
+        }
+
+        private bool IsImageFile(string fileType)
+        {
+            var supportedExtensions = new[] { ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".webp", ".heic" };
+            return supportedExtensions.Contains(fileType.ToLower());
         }
     }
 
